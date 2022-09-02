@@ -12,6 +12,7 @@ const questionSchema = new Schema({
   answers: [
     {
       answerBody: { type: String, required: true },
+      answeredOn: { type: String, required: true },
       userAnswered: { type: String, required: true },
       userId: { type: mongoose.Types.ObjectId, required: true, ref: "User" },
     },

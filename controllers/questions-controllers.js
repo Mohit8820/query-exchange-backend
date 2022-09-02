@@ -1,11 +1,10 @@
 const mongoose = require("mongoose");
-const uuid = require("uuid");
 const HttpError = require("../models/http-error");
 
 const Question = require("../models/question");
 const User = require("../models/user");
 
-const DUMMY_Questions = [
+/*const DUMMY_Questions = [
   {
     _id: "1",
     upVotes: 8,
@@ -96,7 +95,7 @@ const DUMMY_Questions = [
     askedOn: "jan 1",
     answers: [],
   },
-];
+];*/
 
 const getAllQuestion = async (req, res, next) => {
   let questions;
@@ -167,7 +166,6 @@ const getQuestionsByUserId = async (req, res, next) => {
 };
 
 const createQuestion = async (req, res, next) => {
-  //console.log(req.body);
   const { questionTitle, questionBody, questionTags, askedOn, userId } =
     req.body;
   // const title = req.body.title;
@@ -185,7 +183,6 @@ const createQuestion = async (req, res, next) => {
     return next(error);
   }
 
-  console.log(user);
   const createdQues = new Question({
     questionTitle: questionTitle,
     questionBody: questionBody,
@@ -215,35 +212,35 @@ const createQuestion = async (req, res, next) => {
 };
 
 const updateQuestion = async (req, res, next) => {
-  const { answerBody, userId } = req.body;
+  const { answerBody, answeredOn, userId } = req.body;
 
   let user;
   try {
     user = await User.findById(userId);
   } catch (err) {
-    const error = new HttpError("Creating failed while finding user", 404);
+    const error = new HttpError("updation failed while finding user", 404);
     return next(error);
   }
 
   if (!user) {
-    const error = new HttpError("User adding ques doesnt exist", 500);
+    const error = new HttpError("User updating ques doesnt exist", 500);
     return next(error);
   }
 
   const quesId = req.params.qid;
-  console.log(quesId);
 
   let question;
   try {
     question = await Question.findById(quesId);
   } catch (err) {
-    const error = new HttpError("cant update answer", 500);
+    const error = new HttpError("cant add answer", 500);
     return next(error);
   }
 
   const createdAns = {
     answerBody,
     userId,
+    answeredOn,
     userAnswered: user.name,
   };
 
@@ -279,6 +276,17 @@ const deleteQuestion = async (req, res, next) => {
     return next(error);
   }
 
+  if (
+    question.userId.id !== req.userData.userId &&
+    req.userData.userId !== "630f42be2f1ad3455ab123cc"
+  ) {
+    const error = new HttpError(
+      "You are not allowed to delete this question",
+      401
+    );
+    return next(error);
+  }
+
   try {
     const sess = await mongoose.startSession();
     sess.startTransaction();
@@ -294,9 +302,35 @@ const deleteQuestion = async (req, res, next) => {
   res.status(200).json({ message: "Deleted question." });
 };
 
-const deleteAnswer = (req, res, next) => {
-  const { question_id, answer_id } = req.query;
-  console.log(question_id, answer_id);
+const deleteAnswer = async (req, res, next) => {
+  const { question_id, answer_id, answeredBy } = req.query;
+  let question;
+  try {
+    question = await Question.findById(question_id).populate("userId"); //populate gives access to user os userId
+  } catch (err) {
+    const error = new HttpError("Can't delete ans", 500);
+    return next(error);
+  }
+
+  if (!question) {
+    const error = new HttpError(
+      "could not find question to delete the ans",
+      404
+    );
+    return next(error);
+  }
+
+  if (
+    question.userId.id !== req.userData.userId &&
+    req.userData.userId !== "630f42be2f1ad3455ab123cc" &&
+    answeredBy !== req.userData.userId
+  ) {
+    const error = new HttpError(
+      "You are not allowed to delete this answer",
+      401
+    );
+    return next(error);
+  }
 
   Question.findOneAndUpdate(
     { _id: question_id },
@@ -321,91 +355,3 @@ exports.createQuestion = createQuestion;
 exports.updateQuestion = updateQuestion;
 exports.deleteQuestion = deleteQuestion;
 exports.deleteAnswer = deleteAnswer;
-
-/*
-const DUMMY_Questions = [
-  {
-    id: "q1",
-    title: "Empire State Building",
-    upVotes: 4,
-    downVotes: 2,
-    description: "One of the most famous sky scrapers in the world!",
-    answers: ["abc", "pqr"],
-    creator: "u1",
-  },
-  {
-    id: "q2",
-    title: "Empire State Building",
-    description: "One of the most famous sky scrapers in the world!",
-    upVotes: 4,
-    downVotes: 2,
-    answers: [],
-    creator: "u1",
-  },
-];
-
-const getQuestionByQId = (req, res, next) => {
-  const quesId = req.params.qid;
-  const question = DUMMY_Questions.find((q) => {
-    return q.id === quesId;
-  });
-
-  if (!question) {
-    throw new HttpError("error finding question by qid", 404);
-    // return res.status(404).json({ message: "error finding question by qid" });
-  }
-  res.json({ question }); // => { place } => { place: place }
-};
-
-const getQuestionsByUserId = (req, res) => {
-  const userId = req.params.uid;
-  const questions = DUMMY_Questions.filter((q) => {
-    return q.creator === userId;
-  });
-  if (!questions || questions.length === 0) {
-    throw new HttpError("error finding questions by qid", 404); //use "throw error" when synchronous function // next(error) when async
-
-    // return res.status(404).json({ message: "error finding question by uid" });
-  }
-  res.json({ questions });
-};
-
-const createQuestion = (req, res, next) => {
-  console.log(req.body);
-  const { title, description, tag, creator } = req.body;
-  // const title = req.body.title;
-  const createdQues = {
-    id: uuid(),
-    title: title,
-    description: description,
-    tag,
-    answers: [],
-    upVotes: 0,
-    downVotes: 0,
-    creator: creator,
-  };
-
-  DUMMY_Questions.push(createdQues); //unshift(createdPlace)
-
-  res.status(201).json({ question: createdQues });
-};
-
-const updateQuestion = (req, res) => {
-  const { answer } = req.body;
-  const quesId = req.params.qid;
-
-  const updatedQuestion = { ...DUMMY_Questions.find((q) => q.id === quesId) };
-  const quesIndex = DUMMY_Questions.findIndex((q) => q.id === quesId);
-
-  updatedQuestion.answers = [...updatedQuestion.answers, answer];
-
-  DUMMY_Questions[quesIndex] = updatedQuestion;
-  console.log(updatedQuestion);
-  res.status(200).json({ question: updatedQuestion });
-};
-
-exports.getQuestionByQId = getQuestionByQId;
-exports.getQuestionsByUserId = getQuestionsByUserId;
-exports.createQuestion = createQuestion;
-exports.updateQuestion = updateQuestion;
-*/

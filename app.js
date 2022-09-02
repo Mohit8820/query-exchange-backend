@@ -40,7 +40,7 @@ if (port == null || port == "") {
 const mongoose = require("mongoose");
 mongoose
   .connect(
-    "mongodb+srv://admin-hitmo:npijusah@clustertodo.vwsuk.mongodb.net/queries?retryWrites=true&w=majority"
+    `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@clustertodo.vwsuk.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`
   )
   .then(() => {
     app.listen(port, function () {
