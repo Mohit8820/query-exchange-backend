@@ -44,7 +44,7 @@ const getUserbyId = async (req, res, next) => {
 };
 
 const signup = async (req, res, next) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, avatar } = req.body;
 
   let existingUser;
   try {
@@ -70,6 +70,7 @@ const signup = async (req, res, next) => {
     name, // name: name
     email,
     password: hashedPassword,
+    avatar: { ...avatar },
     questions: [],
   });
 
@@ -94,7 +95,9 @@ const signup = async (req, res, next) => {
 
   res.status(201).json({
     userId: createdUser.id,
+    uname: createdUser.name,
     email: createdUser.email,
+    uavatar: createdUser.avatar,
     token: token,
   });
 };
@@ -142,7 +145,9 @@ const login = async (req, res, next) => {
 
   res.status(200).json({
     userId: existingUser.id,
+    uname: existingUser.name,
     email: existingUser.email,
+    uavatar: existingUser.avatar,
     token: token,
   });
 };

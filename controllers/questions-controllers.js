@@ -4,99 +4,6 @@ const HttpError = require("../models/http-error");
 const Question = require("../models/question");
 const User = require("../models/user");
 
-/*const DUMMY_Questions = [
-  {
-    _id: "1",
-    upVotes: 8,
-    downVotes: 2,
-    noOfAnswers: 2,
-    questionTitle:
-      "What is the difference between the function malloc() and calloc()?",
-    questionBody:
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
-    questionTags: "bca",
-    userPosted: "mano",
-    userId: "1",
-    askedOn: " 2022-07-14 11:45:26.123",
-    answers: [
-      {
-        answerBody: "<span>a</span>",
-        userAnswered: "kumar",
-        //   answeredOn: "jan 2",
-        userId: "2",
-      },
-    ],
-  },
-  {
-    _id: "2",
-    upVotes: 8,
-    downVotes: 2,
-    noOfAnswers: 2,
-    questionTitle:
-      "What are the key skills a candidate requires to excel in the field of business administration?",
-    questionBody: "It meant to be",
-    questionTags: "bba",
-    userPosted: "mano",
-    userId: "1",
-    askedOn: "2022-07-14 10:45:26.123",
-    answers: [
-      {
-        answerBody: "<span>a</span>",
-        userAnswered: "kumar",
-        //   answeredOn: "jan 2",
-        userId: "2",
-      },
-      {
-        answerBody: "<h2>Answer 2</h2>",
-        userAnswered: "kumar 333",
-        //   answeredOn: "jan 2",
-        userId: "22",
-      },
-    ],
-  },
-  {
-    _id: "3",
-    upVotes: 8,
-    downVotes: 2,
-    noOfAnswers: 2,
-    questionTitle: "What are embedded structure?",
-    questionBody: "It meant to be",
-    questionTags: "b.tech",
-    userPosted: "mano",
-    userId: "1",
-    askedOn: "jan 20",
-    answers: [
-      {
-        answerBody: "<span>a</span>",
-        userAnswered: "kumar",
-        //   answeredOn: "jan 2",
-        userId: "2",
-      },
-      {
-        answerBody: "<h2>Answer 2</h2>",
-        userAnswered: "kumar 333",
-        //   answeredOn: "jan 2",
-        userId: "22",
-      },
-    ],
-  },
-  {
-    _id: "4",
-    upVotes: 8,
-    downVotes: 2,
-    noOfAnswers: 2,
-    questionTitle:
-      "Without using library function compute the length of the string.",
-    questionBody:
-      "I'm coding a function to find the string length without using the standard headers. I completed the code with start to end but when I'm returning the count at the end, it is not returning the correct answer.",
-    questionTags: "b.tech",
-    userPosted: "mano",
-    userId: "1",
-    askedOn: "jan 1",
-    answers: [],
-  },
-];*/
-
 const getAllQuestion = async (req, res, next) => {
   let questions;
   try {
@@ -154,7 +61,10 @@ const getQuestionsByUserId = async (req, res, next) => {
   }
 
   if (!userWithQues || userWithQues.questions.length === 0) {
-    const error = new HttpError("error finding questions by uid", 404); //use "throw error" when synchronous function // next(error) when async
+    const error = new HttpError(
+      "error finding questions asked by the user",
+      404
+    ); //use "throw error" when synchronous function // next(error) when async
     return next(error);
     // return res.status(404).json({ message: "error finding question by uid" });
   }
@@ -188,11 +98,12 @@ const createQuestion = async (req, res, next) => {
     questionBody: questionBody,
     questionTags,
     answers: [],
-    //upVotes: 0,
-    //downVotes: 0,
+    likes: [],
+    dislikes: [],
     askedOn,
     userId,
     userPosted: user.name,
+    userPostedAvatar: { ...user.avatar },
   });
 
   try {
@@ -241,6 +152,8 @@ const updateQuestion = async (req, res, next) => {
     answerBody,
     userId,
     answeredOn,
+    upVotes: [],
+    downVotes: [],
     userAnswered: user.name,
   };
 
@@ -348,6 +261,207 @@ const deleteAnswer = async (req, res, next) => {
   );
 };
 
+const like = async (req, res, next) => {
+  const { userId } = req.body;
+
+  Question.findByIdAndUpdate(
+    req.params.qid,
+    { $push: { likes: userId }, $pull: { dislikes: userId } },
+    function (err, foundQues) {
+      if (!foundQues) {
+        res
+          .status(404)
+          .json({ message: "Ques liking failed while finding ques" });
+      } else if (err) {
+        res
+          .status(404)
+          .json({ message: "Something went wrong while liking the ques" });
+      } else {
+        res.status(200).json({
+          message: "ques liked",
+        });
+      }
+    }
+  );
+};
+
+const unlike = async (req, res, next) => {
+  const { userId } = req.body;
+
+  Question.findByIdAndUpdate(
+    req.params.qid,
+    { $pull: { likes: userId } },
+    function (err, foundQues) {
+      if (!foundQues) {
+        res
+          .status(404)
+          .json({ message: "Ques unliking failed while finding ques" });
+      } else if (err) {
+        res
+          .status(404)
+          .json({ message: "Something went wrong while unliking the ques" });
+      } else {
+        res.status(200).json({
+          message: "ques unliked",
+        });
+      }
+    }
+  );
+};
+
+const dislike = async (req, res, next) => {
+  const { userId } = req.body;
+
+  Question.findByIdAndUpdate(
+    req.params.qid,
+    { $pull: { likes: userId }, $push: { dislikes: userId } },
+    function (err, foundQues) {
+      if (!foundQues) {
+        res
+          .status(404)
+          .json({ message: "Ques disliking failed while finding ques" });
+      } else if (err) {
+        res
+          .status(404)
+          .json({ message: "Something went wrong while disliking the ques" });
+      } else {
+        res.status(200).json({
+          message: "ques disliked",
+        });
+      }
+    }
+  );
+};
+
+const undoDislike = async (req, res, next) => {
+  const { userId } = req.body;
+
+  Question.findByIdAndUpdate(
+    req.params.qid,
+    { $pull: { dislikes: userId } },
+    function (err, foundQues) {
+      if (!foundQues) {
+        res
+          .status(404)
+          .json({ message: "Ques disliking failed while finding ques" });
+      } else if (err) {
+        res
+          .status(404)
+          .json({ message: "Something went wrong while disliking the ques" });
+      } else {
+        res.status(200).json({
+          message: "ques disliked",
+        });
+      }
+    }
+  );
+};
+
+const upvote = async (req, res, next) => {
+  const { userId } = req.body;
+  Question.updateOne(
+    { "answers._id": req.params.aid },
+    {
+      $push: {
+        "answers.$.upvotes": userId,
+      },
+    },
+    { new: true },
+    function (err, foundQues) {
+      if (!foundQues) {
+        res
+          .status(404)
+          .json({ message: "Ans liking failed while finding ques" });
+      } else if (err) {
+        res
+          .status(404)
+          .json({ message: "Something went wrong while liking the Ans" });
+      } else {
+        res.status(200).json({
+          message: "Ans liked",
+        });
+      }
+    }
+  );
+};
+
+const undoUpvote = async (req, res, next) => {
+  const { userId } = req.body;
+
+  Question.updateOne(
+    { "answers._id": req.params.aid },
+    { $pull: { "answers.$.upvotes": userId } },
+    function (err, foundQues) {
+      if (!foundQues) {
+        res
+          .status(404)
+          .json({ message: "Ques unliking failed while finding ques" });
+      } else if (err) {
+        res
+          .status(404)
+          .json({ message: "Something went wrong while unliking the ques" });
+      } else {
+        res.status(200).json({
+          message: "ques unliked",
+        });
+      }
+    }
+  );
+};
+
+const downvote = async (req, res, next) => {
+  const { userId } = req.body;
+
+  Question.updateOne(
+    { "answers._id": req.params.aid },
+    {
+      $pull: { "answers.$.upvotes": userId },
+      $push: { "answers.$.downvotes": userId },
+    },
+    function (err, foundQues) {
+      if (!foundQues) {
+        res
+          .status(404)
+          .json({ message: "Ques disliking failed while finding ques" });
+      } else if (err) {
+        res
+          .status(404)
+          .json({ message: "Something went wrong while disliking the ques" });
+      } else {
+        res.status(200).json({
+          message: "ques disliked",
+        });
+      }
+    }
+  );
+};
+
+const undoDownvote = async (req, res, next) => {
+  const { userId } = req.body;
+
+  Question.updateOne(
+    { "answers._id": req.params.aid },
+    {
+      $pull: { "answers.$.downvotes": userId },
+    },
+    function (err, foundQues) {
+      if (!foundQues) {
+        res
+          .status(404)
+          .json({ message: "Ques disliking failed while finding ques" });
+      } else if (err) {
+        res
+          .status(404)
+          .json({ message: "Something went wrong while disliking the ques" });
+      } else {
+        res.status(200).json({
+          message: "ques disliked",
+        });
+      }
+    }
+  );
+};
+
 exports.getAllQuestion = getAllQuestion;
 exports.getQuestionByQId = getQuestionByQId;
 exports.getQuestionsByUserId = getQuestionsByUserId;
@@ -355,3 +469,11 @@ exports.createQuestion = createQuestion;
 exports.updateQuestion = updateQuestion;
 exports.deleteQuestion = deleteQuestion;
 exports.deleteAnswer = deleteAnswer;
+exports.like = like;
+exports.unlike = unlike;
+exports.dislike = dislike;
+exports.undoDislike = undoDislike;
+exports.upvote = upvote;
+exports.undoUpvote = undoUpvote;
+exports.downvote = downvote;
+exports.undoDownvote = undoDownvote;
