@@ -4,6 +4,8 @@ const HttpError = require("../models/http-error");
 const Question = require("../models/question");
 const User = require("../models/user");
 
+const cloudinary = require("../utils/cloudinary");
+
 const getAllQuestion = async (req, res, next) => {
   let questions;
   try {
@@ -76,27 +78,41 @@ const getQuestionsByUserId = async (req, res, next) => {
 };
 
 const createQuestion = async (req, res, next) => {
-  const { questionTitle, questionBody, questionTags, askedOn, userId } =
-    req.body;
+  const {
+    questionTitle,
+    questionBody,
+    questionImage,
+    questionImageTitles,
+    questionTags,
+    askedOn,
+    userId,
+  } = req.body;
   // const title = req.body.title;
 
   let user;
   try {
     user = await User.findById(userId);
   } catch (err) {
-    const error = new HttpError("Creating failed while finding user", 404);
+    const error = new HttpError(
+      "Creating question failed while finding user",
+      404
+    );
     return next(error);
   }
 
   if (!user) {
-    const error = new HttpError("User adding ques doesnt exist", 500);
+    const error = new HttpError("User creating question doesnt exist", 500);
     return next(error);
   }
 
-  const createdQues = new Question({
+  console.log(req.body.questionImage.length);
+
+  var quesJson = {
     questionTitle: questionTitle,
     questionBody: questionBody,
     questionTags,
+    questionImage: [],
+    questionImageTitles,
     answers: [],
     likes: [],
     dislikes: [],
@@ -104,6 +120,31 @@ const createQuestion = async (req, res, next) => {
     userId,
     userPosted: user.name,
     userPostedAvatar: { ...user.avatar },
+  };
+
+  //check for image first
+  console.log(questionImage.length);
+  if (questionImage.length !== 0) {
+    let images = [...req.body.questionImage];
+    let imagesBuffer = [];
+
+    for (let i = 0; i < images.length; i++) {
+      const result = await cloudinary.uploader.upload(images[i], {
+        folder: "queryQues",
+        // width: 400,
+        // crop: "scale",
+      });
+
+      imagesBuffer.push({
+        public_id: result.public_id,
+        url: result.secure_url,
+      });
+    }
+    quesJson = { ...quesJson, questionImage: [...imagesBuffer] };
+  }
+
+  const createdQues = new Question({
+    ...quesJson,
   });
 
   try {

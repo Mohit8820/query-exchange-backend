@@ -6,6 +6,13 @@ const questionSchema = new Schema({
   questionTitle: { type: String, required: true },
   questionBody: { type: String, required: true },
   questionTags: { type: String, required: true },
+  questionImage: [
+    {
+      public_id: String,
+      url: String,
+    },
+  ],
+  questionImageTitles: [String],
   userPosted: { type: String, required: true },
   userPostedAvatar: {
     topType: { type: String, required: true },
