@@ -40,6 +40,13 @@ const questionSchema = new Schema({
         { type: mongoose.Types.ObjectId, required: true, ref: "User" },
       ],
       answeredOn: { type: String, required: true },
+      answerImage: [
+        {
+          public_id: String,
+          url: String,
+        },
+      ],
+      answerImageTitles: [String],
       userAnswered: { type: String, required: true },
       userId: { type: mongoose.Types.ObjectId, required: true, ref: "User" },
     },

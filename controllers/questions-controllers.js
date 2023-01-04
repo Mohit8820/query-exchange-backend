@@ -125,22 +125,27 @@ const createQuestion = async (req, res, next) => {
   //check for image first
   console.log(questionImage.length);
   if (questionImage.length !== 0) {
-    let images = [...req.body.questionImage];
-    let imagesBuffer = [];
+    try {
+      let images = [...req.body.questionImage];
+      let imagesBuffer = [];
 
-    for (let i = 0; i < images.length; i++) {
-      const result = await cloudinary.uploader.upload(images[i], {
-        folder: "queryQues",
-        // width: 400,
-        // crop: "scale",
-      });
+      for (let i = 0; i < images.length; i++) {
+        const result = await cloudinary.uploader.upload(images[i], {
+          folder: "queryQues",
+          // width: 400,
+          // crop: "scale",
+        });
 
-      imagesBuffer.push({
-        public_id: result.public_id,
-        url: result.secure_url,
-      });
+        imagesBuffer.push({
+          public_id: result.public_id,
+          url: result.secure_url,
+        });
+      }
+      quesJson = { ...quesJson, questionImage: [...imagesBuffer] };
+    } catch (err) {
+      const error = new HttpError("error uploading question images", 404);
+      return next(error);
     }
-    quesJson = { ...quesJson, questionImage: [...imagesBuffer] };
   }
 
   const createdQues = new Question({
@@ -164,18 +169,19 @@ const createQuestion = async (req, res, next) => {
 };
 
 const updateQuestion = async (req, res, next) => {
-  const { answerBody, answeredOn, userId } = req.body;
+  const { answerBody, answeredOn, answerImage, answerImageTitles, userId } =
+    req.body;
 
   let user;
   try {
     user = await User.findById(userId);
   } catch (err) {
-    const error = new HttpError("updation failed while finding user", 404);
+    const error = new HttpError("adding answer failed while finding user", 404);
     return next(error);
   }
 
   if (!user) {
-    const error = new HttpError("User updating ques doesnt exist", 500);
+    const error = new HttpError("User adding answer doesnt exist", 500);
     return next(error);
   }
 
@@ -185,18 +191,45 @@ const updateQuestion = async (req, res, next) => {
   try {
     question = await Question.findById(quesId);
   } catch (err) {
-    const error = new HttpError("cant add answer", 500);
+    const error = new HttpError("can't add answer", 500);
     return next(error);
   }
 
-  const createdAns = {
+  var createdAns = {
     answerBody,
     userId,
     answeredOn,
+    answerImage: [],
+    answerImageTitles,
     upVotes: [],
     downVotes: [],
     userAnswered: user.name,
   };
+
+  //check for image first
+  if (answerImage.length !== 0) {
+    try {
+      let ansimages = [...answerImage];
+      let ansimagesBuffer = [];
+
+      for (let i = 0; i < ansimages.length; i++) {
+        const result = await cloudinary.uploader.upload(ansimages[i], {
+          folder: "queryAns",
+          // width: 400,
+          // crop: "scale",
+        });
+        ansimagesBuffer.push({
+          public_id: result.public_id,
+          url: result.secure_url,
+        });
+      }
+
+      createdAns = { ...createdAns, answerImage: [...ansimagesBuffer] };
+    } catch (err) {
+      const error = new HttpError("error uploading answer images", 404);
+      return next(error);
+    }
+  }
 
   question.answers = [...question.answers, createdAns];
 
