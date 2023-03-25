@@ -265,7 +265,7 @@ const deleteQuestion = async (req, res, next) => {
 
   if (
     question.userId.id !== req.userData.userId &&
-    req.userData.userId !== "630f42be2f1ad3455ab123cc"
+    req.userData.userId !== process.env.ADMIN_ID
   ) {
     const error = new HttpError(
       "You are not allowed to delete this question",
@@ -309,7 +309,7 @@ const deleteAnswer = async (req, res, next) => {
 
   if (
     question.userId.id !== req.userData.userId &&
-    req.userData.userId !== "630f42be2f1ad3455ab123cc" &&
+    req.userData.userId !== process.env.ADMIN_ID &&
     answeredBy !== req.userData.userId
   ) {
     const error = new HttpError(
