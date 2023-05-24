@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const HttpError = require("../models/http-error");
 
+const mailer = require("../utils/mailer");
+
 const Question = require("../models/question");
 const User = require("../models/user");
 
@@ -105,7 +107,7 @@ const createQuestion = async (req, res, next) => {
     return next(error);
   }
 
-  console.log(req.body.questionImage.length);
+  // console.log(req.body.questionImage.length);
 
   var quesJson = {
     questionTitle: questionTitle,
@@ -123,7 +125,7 @@ const createQuestion = async (req, res, next) => {
   };
 
   //check for image first
-  console.log(questionImage.length);
+  // console.log(questionImage.length);
   if (questionImage.length !== 0) {
     try {
       let images = [...req.body.questionImage];
@@ -189,7 +191,7 @@ const updateQuestion = async (req, res, next) => {
 
   let question;
   try {
-    question = await Question.findById(quesId);
+    question = await Question.findById(quesId).populate("userId");
   } catch (err) {
     const error = new HttpError("can't add answer", 500);
     return next(error);
@@ -242,7 +244,7 @@ const updateQuestion = async (req, res, next) => {
     );
     return next(error);
   }
-
+  mailer(question.userId.email, question.questionTitle).catch(console.error);
   // DUMMY_Questions[quesIndex] = updatedQuestion;
   res.status(200).json({ question: question.toObject({ getters: true }) });
 };
