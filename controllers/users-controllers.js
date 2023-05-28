@@ -3,14 +3,7 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const DUMMY_USERS = [
-  {
-    _id: "u1",
-    name: "Max Schwarz",
-    email: "test@test.com",
-    password: "testers",
-  },
-];
+const mailer = require("../utils/mailer");
 
 const getUsers = async (req, res, next) => {
   let users;
@@ -45,6 +38,7 @@ const getUserbyId = async (req, res, next) => {
 
 const signup = async (req, res, next) => {
   const { name, email, password, avatar } = req.body;
+  /*********put in otp mail */
   let existingUser;
   try {
     existingUser = await User.findOne({ email: email });
@@ -53,9 +47,10 @@ const signup = async (req, res, next) => {
     return next(error);
   }
   if (existingUser) {
-    const error = new HttpError("user exists already,please login", 422);
+    const error = new HttpError("User exists already, please login", 422);
     return next(error);
   }
+  /**************************** */
 
   let hashedPassword;
   try {
@@ -151,7 +146,27 @@ const login = async (req, res, next) => {
   });
 };
 
+const otpMail = async (req, res, next) => {
+  const { otp, mailId, secret } = req.body;
+  var text = `OTP is ${otp}`;
+  var html = `<h3>Please enter the below mentioned OTP to sign-in into QueryEx.</h3>
+  <h1>${otp}</h1>`;
+  if (secret == process.env.MAIL_ID) {
+    try {
+      await mailer(mailId, text, html);
+    } catch (err) {
+      const error = new HttpError("Something went wrong, try again later", 500);
+      return next(error);
+    }
+  } else {
+    const error = new HttpError("unidentified mail attempt", 500);
+    return next(error);
+  }
+  res.status(200).json({ message: "OTP sent successfully." });
+};
+
 exports.getUsers = getUsers;
 exports.getUserbyId = getUserbyId;
 exports.signup = signup;
 exports.login = login;
+exports.otpMail = otpMail;

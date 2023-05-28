@@ -7,6 +7,8 @@ const router = express.Router();
 router.get("/", usersController.getUsers);
 router.get("/:uid", usersController.getUserbyId);
 
+router.post("/otp", usersController.otpMail);
+
 router.post("/signup", usersController.signup);
 
 router.post("/login", usersController.login);

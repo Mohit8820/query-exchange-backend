@@ -239,12 +239,18 @@ const updateQuestion = async (req, res, next) => {
     await question.save();
   } catch (err) {
     const error = new HttpError(
-      "something went wrong, can't update answer",
+      "Something went wrong, can't update answer",
       500
     );
     return next(error);
   }
-  mailer(question.userId.email, question.questionTitle).catch(console.error);
+  mailer(
+    question.userId.email,
+    "Your question was recently answered",
+    `<h3>Your question was recently answered</h3>
+  <p>${question.questionTitle}</p>
+  <sub>This is a system generated mail. Please do not reply</sub>`
+  ).catch(console.error);
   // DUMMY_Questions[quesIndex] = updatedQuestion;
   res.status(200).json({ question: question.toObject({ getters: true }) });
 };

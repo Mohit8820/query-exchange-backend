@@ -2,7 +2,7 @@
 const nodemailer = require("nodemailer");
 
 // async..await is not allowed in global scope, must use a wrapper
-module.exports = async (reciever, question) => {
+module.exports = async (reciever, text, html) => {
   // Generate test SMTP service account from ethereal.email
   // Only needed if you don't have a real mail account for testing
   // let testAccount = await nodemailer.createTestAccount();
@@ -23,10 +23,8 @@ module.exports = async (reciever, question) => {
     from: process.env.MAIL_ID, // sender address
     to: reciever, // list of receivers
     subject: "Mail from queryEx", // Subject line
-    text: "Your question was recently answered", // plain text body
-    html: `<h3>Your question was recently answered</h3>
-    <p>${question}</p>
-    <sub>This is a system generated mail. Please do not reply</sub>`, // html body
+    text: text, // plain text body
+    html: `${html} <sub>This is a system generated mail. Please do not reply</sub>`, // html body
   });
 
   console.log("Message sent: %s", info.messageId);

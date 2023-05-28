@@ -10,7 +10,7 @@ router.get("/:qid", questionController.getQuestionByQId);
 
 router.get("/user/:uid", questionController.getQuestionsByUserId);
 
-router.use(checkAuth); //checke for valid token to continue below
+router.use(checkAuth); //check for valid token to continue below
 
 router.post("/", questionController.createQuestion);
 
