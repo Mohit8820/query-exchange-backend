@@ -260,9 +260,9 @@ const deleteQuestion = async (req, res, next) => {
 
   let question;
   try {
-    question = await Question.findById(quesId).populate("userId"); //populate gives access to user os userId
+    question = await Question.findById(quesId).populate("userId"); //populate gives access to user of userId
   } catch (err) {
-    const error = new HttpError("cant delete ques", 500);
+    const error = new HttpError("could not delete ques", 500);
     return next(error);
   }
 
@@ -290,7 +290,7 @@ const deleteQuestion = async (req, res, next) => {
     await question.userId.save({ session: sess });
     await sess.commitTransaction();
   } catch (err) {
-    const error = new HttpError("Something went wrong,cant delete ques", 500);
+    const error = new HttpError("Something went wrong, can't delete ques", 500);
     return next(error);
   }
 

@@ -38,7 +38,6 @@ const getUserbyId = async (req, res, next) => {
 
 const signup = async (req, res, next) => {
   const { name, email, password, avatar } = req.body;
-  /*********put in otp mail */
   let existingUser;
   try {
     existingUser = await User.findOne({ email: email });
@@ -50,7 +49,6 @@ const signup = async (req, res, next) => {
     const error = new HttpError("User exists already, please login", 422);
     return next(error);
   }
-  /**************************** */
 
   let hashedPassword;
   try {
@@ -148,6 +146,19 @@ const login = async (req, res, next) => {
 
 const otpMail = async (req, res, next) => {
   const { otp, mailId, secret } = req.body;
+
+  let existingUser;
+  try {
+    existingUser = await User.findOne({ email: mailId });
+  } catch {
+    const error = new HttpError("Process failed", 500);
+    return next(error);
+  }
+  if (existingUser) {
+    const error = new HttpError("User exists already, please login", 422);
+    return next(error);
+  }
+
   var text = `OTP is ${otp}`;
   var html = `<h3>Please enter the below mentioned OTP to sign-in into QueryEx.</h3>
   <h1>${otp}</h1>`;
