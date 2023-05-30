@@ -244,12 +244,13 @@ const updateQuestion = async (req, res, next) => {
     );
     return next(error);
   }
+  quesUrl = `${process.env.FRONTEND_URL}Questions/${quesId}`;
   mailer(
     question.userId.email,
     "Your question was recently answered",
     `<h3>Your question was recently answered</h3>
-  <p>${question.questionTitle}</p>
-  <sub>This is a system generated mail. Please do not reply</sub>`
+   <p>Link to question: <a href= ${quesUrl}>Click here<a/></p>
+   <sub>This is a system generated mail. Please do not reply</sub>`
   ).catch(console.error);
   // DUMMY_Questions[quesIndex] = updatedQuestion;
   res.status(200).json({ question: question.toObject({ getters: true }) });
@@ -477,14 +478,14 @@ const undoUpvote = async (req, res, next) => {
       if (!foundQues) {
         res
           .status(404)
-          .json({ message: "Ques unliking failed while finding ques" });
+          .json({ message: "Ans unliking failed while finding ques" });
       } else if (err) {
         res
           .status(404)
-          .json({ message: "Something went wrong while unliking the ques" });
+          .json({ message: "Something went wrong while unliking the Ans" });
       } else {
         res.status(200).json({
-          message: "ques unliked",
+          message: "Ans unliked",
         });
       }
     }
@@ -504,14 +505,14 @@ const downvote = async (req, res, next) => {
       if (!foundQues) {
         res
           .status(404)
-          .json({ message: "Ques disliking failed while finding ques" });
+          .json({ message: "Ans disliking failed while finding ques" });
       } else if (err) {
         res
           .status(404)
-          .json({ message: "Something went wrong while disliking the ques" });
+          .json({ message: "Something went wrong while disliking the Ans" });
       } else {
         res.status(200).json({
-          message: "ques disliked",
+          message: "Ans disliked",
         });
       }
     }
@@ -530,14 +531,14 @@ const undoDownvote = async (req, res, next) => {
       if (!foundQues) {
         res
           .status(404)
-          .json({ message: "Ques disliking failed while finding ques" });
+          .json({ message: "Ans disliking failed while finding ques" });
       } else if (err) {
-        res
-          .status(404)
-          .json({ message: "Something went wrong while disliking the ques" });
+        res.status(404).json({
+          message: "Something went wrong while undoing the dislike of the Ans",
+        });
       } else {
         res.status(200).json({
-          message: "ques disliked",
+          message: "Ans dislike undo",
         });
       }
     }
