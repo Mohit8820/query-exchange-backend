@@ -24,7 +24,7 @@ module.exports = async (reciever, text, html) => {
     to: reciever, // list of receivers
     subject: "Mail from queryEx", // Subject line
     text: text, // plain text body
-    html: `${html} <sub>This is a system generated mail. Please do not reply</sub>`, // html body
+    html: `${html} <sub>This is a system generated mail. Please do not reply.</sub>`, // html body
   });
 
   console.log("Message sent: %s", info.messageId);

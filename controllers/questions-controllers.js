@@ -11,7 +11,24 @@ const cloudinary = require("../utils/cloudinary");
 const getAllQuestion = async (req, res, next) => {
   let questions;
   try {
-    questions = await Question.find();
+    questions = await Question.find(
+      {},
+      {
+        answersLength: { $size: "$answers" },
+        questionTitle: 1,
+        questionBody: 1,
+        questionTags: 1,
+        questionImage: 1,
+        questionImageTitles: 1,
+        likes: 1,
+        dislikes: 1,
+        userId: 1,
+        userPosted: 1,
+        askedOn: 1,
+      }
+    ).populate("userId", {
+      avatar: 1,
+    });
   } catch (err) {
     const error = new HttpError(
       "Couldn't find the questions because something went wrong with the request",
@@ -57,7 +74,19 @@ const getQuestionsByUserId = async (req, res, next) => {
   //let questions;
   let userWithQues;
   try {
-    userWithQues = await User.findById(userId).populate("questions");
+    userWithQues = await User.findById(userId).populate("questions", {
+      answersLength: { $size: "$answers" },
+      questionTitle: 1,
+      questionBody: 1,
+      questionTags: 1,
+      questionImage: 1,
+      questionImageTitles: 1,
+      likes: 1,
+      dislikes: 1,
+      userId: 1,
+      userPosted: 1,
+      askedOn: 1,
+    });
     //  questions = await Question.find({ userId: userId });
   } catch (err) {
     const error = new HttpError("Fetching places by uid failed", 500);
@@ -121,7 +150,7 @@ const createQuestion = async (req, res, next) => {
     askedOn,
     userId,
     userPosted: user.name,
-    userPostedAvatar: { ...user.avatar },
+    // userPostedAvatar: { ...user.avatar },
   };
 
   //check for image first
@@ -163,11 +192,11 @@ const createQuestion = async (req, res, next) => {
     await user.save({ session: session });
     await session.commitTransaction();
   } catch (err) {
-    const error = new HttpError("Creating question failed", 500);
+    const error = new HttpError("Adding question failed", 500);
     return next(error);
   }
 
-  res.status(201).json({ question: createdQues });
+  res.status(201).json({ message: "Question Added Successfully." });
 };
 
 const updateQuestion = async (req, res, next) => {
@@ -191,7 +220,9 @@ const updateQuestion = async (req, res, next) => {
 
   let question;
   try {
-    question = await Question.findById(quesId).populate("userId");
+    question = await Question.findById(quesId).populate("userId", {
+      email: 1,
+    });
   } catch (err) {
     const error = new HttpError("can't add answer", 500);
     return next(error);
@@ -249,8 +280,7 @@ const updateQuestion = async (req, res, next) => {
     question.userId.email,
     "Your question was recently answered",
     `<h3>Your question was recently answered</h3>
-   <p>Link to question: <a href= ${quesUrl}>Click here<a/></p>
-   <sub>This is a system generated mail. Please do not reply</sub>`
+   <p>Link to question: <a href= ${quesUrl}>Click here<a/></p>`
   ).catch(console.error);
   // DUMMY_Questions[quesIndex] = updatedQuestion;
   res.status(200).json({ question: question.toObject({ getters: true }) });
